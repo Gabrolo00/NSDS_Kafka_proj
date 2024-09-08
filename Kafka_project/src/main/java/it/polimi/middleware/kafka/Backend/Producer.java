@@ -1,20 +1,14 @@
 package it.polimi.middleware.kafka.Backend;
 
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.json.JSONObject;
 
 import it.polimi.middleware.kafka.Backend.Users.User;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -23,7 +17,6 @@ public class Producer {
     private KafkaProducer<String, String> producer;
     private String userTopic = "user-events";
     private String courseTopic = "course-events";
-    private String enrollmentTopic = "enrollment-events";
     private String projectTopic = "project-events";
     private String producerTransactionalId = "producer-transactional-id";
 
@@ -134,14 +127,16 @@ public class Producer {
         event.put("voto", voto);
 
         ProducerRecord<String, String> record = new ProducerRecord<>(projectTopic, userId, event.toString());
+        System.out.println("ENTRO NEL WAIT");
         waitMsg(record);
     }
 
-    public void sendCheckCompleteCourse(String eventType, String userId, String courseId) {
+    public void sendCheckCompleteCourse(String eventType, String userId, String courseId, String projectId) {
         JSONObject event = new JSONObject();
         event.put("type", eventType);
         event.put("userId", userId);
         event.put("courseId", courseId);
+        event.put("projectId", projectId);
 
         ProducerRecord<String, String> record = new ProducerRecord<>(courseTopic, userId, event.toString());
         waitMsg(record);
@@ -155,11 +150,17 @@ public class Producer {
 
         Future<RecordMetadata> future = producer.send(record);
 
-        try {
-            RecordMetadata ack = future.get();
-            System.out.println("Message sent to partition " + ack.partition() + " with offset " + ack.offset());
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+        System.out.println("ENTRATO NEL WAIT");
+
+        if (true) {
+            try {
+                RecordMetadata ack = future.get();
+                System.out.println("Message sent to partition " + ack.partition() + " with offset " + ack.offset());
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+
         }
+
     }
 }

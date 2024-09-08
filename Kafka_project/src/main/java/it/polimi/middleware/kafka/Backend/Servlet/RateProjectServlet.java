@@ -96,7 +96,9 @@ public class RateProjectServlet extends HttpServlet {
 
                                             if (votoTot != 0) {
                                                 if (votoTot >= 18) {
-                                                    producer.sendCheckCompleteCourse("COMPLETE", studentId, courseId);
+                                                    producer.sendCheckCompleteCourse("COMPLETE", studentId, courseId,
+                                                            projectId); // si manda projectId per verificare che sia
+                                                                        // stato consumato prima l'evento RATE
 
                                                     producer.getProducer().commitTransaction();
                                                     producer.getProducer().close();

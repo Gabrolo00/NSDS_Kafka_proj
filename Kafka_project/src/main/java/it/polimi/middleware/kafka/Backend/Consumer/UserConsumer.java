@@ -1,12 +1,18 @@
 package it.polimi.middleware.kafka.Backend.Consumer;
 
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.ListOffsetsResult;
+import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.requests.ListOffsetsRequest;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.clients.admin.OffsetSpec;
 
 import it.polimi.middleware.kafka.Backend.Services.UserService;
 import it.polimi.middleware.kafka.Backend.Users.User;
@@ -17,6 +23,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 public class UserConsumer extends Thread {
     private KafkaConsumer<String, String> consumer;
@@ -61,14 +69,14 @@ public class UserConsumer extends Thread {
                     User user = User.fromString(record.value());
                     userService.registerUser(user);
 
+                    System.out.println("------------------- MESSAGGI CONSUMATO --------------");
+
                 }
 
                 this.offsets = consumerOffsetsToMap(this.consumer, records);
 
             }
-
         }
-
     }
 
     public void shutdown() {

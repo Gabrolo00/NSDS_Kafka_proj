@@ -14,7 +14,6 @@ import it.polimi.middleware.kafka.Backend.Project;
 import it.polimi.middleware.kafka.Backend.Services.CourseService;
 import it.polimi.middleware.kafka.Backend.Services.ProjectService;
 import it.polimi.middleware.kafka.Backend.Services.UserService;
-import it.polimi.middleware.kafka.Backend.Users.User;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -28,6 +27,7 @@ public class ProjectConsumer extends Thread {
     private String topic = "project-events";
     private CourseService courseService;
     private ProjectService projectService;
+    private UserService userService;
     private ConsumerRecords<String, String> records;
     private boolean autoCommit = false;
     private Map<TopicPartition, OffsetAndMetadata> offsets;
@@ -43,10 +43,12 @@ public class ProjectConsumer extends Thread {
         return offsets;
     }
 
-    public ProjectConsumer(CourseService courseService, ProjectService projectService, String server_address,
+    public ProjectConsumer(CourseService courseService, ProjectService projectService, UserService userService,
+            String server_address,
             String group_id) {
         this.courseService = courseService;
         this.projectService = projectService;
+        this.userService = userService;
 
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, server_address);
@@ -75,8 +77,19 @@ public class ProjectConsumer extends Thread {
                         switch (eventType) {
                             case "CREATE":
                                 Project project = Project.fromString(event.getString("data"));
+
+                                while (courseService.getCourse(project.getCourseId()) == null) {
+                                    try {
+                                        Thread.sleep(2000);
+                                        System.out.println("------ PROVATO CREATE PROJECT ---------");
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                                 projectService.addProjectToCourse(courseService.getCourse(project.getCourseId()),
                                         project);
+
+                                System.out.println("------ PROJECT CREATO ---------");
                                 break;
 
                             case "SUBMIT":
@@ -85,8 +98,23 @@ public class ProjectConsumer extends Thread {
                                 String courseId = event.getString("courseId");
                                 String projectId = event.getString("projectId");
                                 String allegato = event.getString("allegato");
+
+                                while (courseService.getCourse(courseId) == null
+                                        || userService.getUser(studentId) == null
+                                        || courseService.getCourse(courseId).getProject(projectId) == null
+                                        || courseService.getCourse(courseId).getStudent(studentId) == null) {
+                                    try {
+                                        Thread.sleep(2000);
+                                        System.out.println("------ PROVATO SUBMIT PROJECT ---------");
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                                 Course course = courseService.getCourse(courseId);
+
                                 projectService.submitProject(studentId, course, projectId, allegato);
+
+                                System.out.println("------ SUBMIT PROJECT FATTO ---------");
                                 break;
 
                             case "RATE":
@@ -98,6 +126,8 @@ public class ProjectConsumer extends Thread {
 
                                 Project project_ = courseService.getCourse(course_id).getProject(project_id);
                                 projectService.rateProject(studentid, project_, voto);
+
+                                System.out.println("------ RATE PROJECT FATTO ---------");
                                 break;
 
                             case "UPDATEMAP":
@@ -106,9 +136,21 @@ public class ProjectConsumer extends Thread {
                                 String courseid = event.getString("courseId");
                                 String projectid = event.getString("projectId");
 
+                                while (courseService.getCourse(courseid) == null
+                                        || userService.getUser(studentid2) == null) {
+                                    try {
+                                        Thread.sleep(2000);
+                                        System.out.println("------ PROVATO UPDATEMAP PROJECT ---------");
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
                                 Project project2 = courseService.getCourse(courseid).getProject(projectid);
 
                                 projectService.updateMapProject(studentid2, project2);
+
+                                System.out.println("------ UPDATEMAP FATTO ---------");
                                 break;
                             /*
                              * case "DELETE":

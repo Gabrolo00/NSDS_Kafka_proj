@@ -11,7 +11,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 
 import it.polimi.middleware.kafka.Backend.Services.UserService;
 import it.polimi.middleware.kafka.Backend.Consumer.CourseConsumer;
-import it.polimi.middleware.kafka.Backend.Consumer.EnrollConsumer;
 import it.polimi.middleware.kafka.Backend.Consumer.ProjectConsumer;
 import it.polimi.middleware.kafka.Backend.Consumer.UserConsumer;
 import it.polimi.middleware.kafka.Backend.Services.CourseService;
@@ -27,6 +26,7 @@ import it.polimi.middleware.kafka.Backend.Servlet.GetCourses;
 import it.polimi.middleware.kafka.Backend.Servlet.GetEnrolledCourses;
 import it.polimi.middleware.kafka.Backend.Servlet.GetProjects;
 import it.polimi.middleware.kafka.Backend.Servlet.GetRegisteredUsersServlet;
+import it.polimi.middleware.kafka.Backend.Servlet.GetUserServlet;
 import it.polimi.middleware.kafka.Backend.Servlet.LoginServlet;
 import it.polimi.middleware.kafka.Backend.Servlet.RateProjectServlet;
 import it.polimi.middleware.kafka.Backend.Servlet.RegisterServlet;
@@ -71,23 +71,16 @@ public class ServerMain {
 
         userConsumer.start();
         addAdmin();
-        userConsumer.join();
 
-        CourseConsumer courseConsumer = new CourseConsumer(userService, courseService, registrationService,
+        CourseConsumer courseConsumer = new CourseConsumer(userService,
+                courseService, registrationService,
                 "localhost:9092", "groupCourse2");
         courseConsumer.start();
-        courseConsumer.join();
 
-        EnrollConsumer enrollConsumer = new EnrollConsumer(userService, courseService, projectService,
-                "localhost:9092",
-                "groupEnroll2");
-        enrollConsumer.start();
-        enrollConsumer.join();
-
-        ProjectConsumer projectConsumer = new ProjectConsumer(courseService, projectService, "localhost:9092",
+        ProjectConsumer projectConsumer = new ProjectConsumer(courseService,
+                projectService, userService, "localhost:9092",
                 "groupProject2");
         projectConsumer.start();
-        projectConsumer.join();
 
         ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         handler.setContextPath("/");
@@ -96,6 +89,9 @@ public class ServerMain {
         handler.addServlet(new ServletHolder(new RegisterServlet(userService)), "/register");
         // Aggiungi servlet per la rotta /login
         handler.addServlet(new ServletHolder(new LoginServlet(userService)), "/login");
+
+        // Aggiungi servlet per tornare uno user in base allo userId
+        handler.addServlet(new ServletHolder(new GetUserServlet(userService)), "/user");
 
         // close app -> fa il commit di tutti i log e chiude il consumer
         handler.addServlet(new ServletHolder(new Close(userConsumer)), "/close");

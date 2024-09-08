@@ -10,6 +10,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.json.JSONObject;
 
 import it.polimi.middleware.kafka.Backend.Course;
+import it.polimi.middleware.kafka.Backend.Project;
 import it.polimi.middleware.kafka.Backend.Services.CourseService;
 import it.polimi.middleware.kafka.Backend.Services.RegistrationService;
 import it.polimi.middleware.kafka.Backend.Services.UserService;
@@ -83,17 +84,37 @@ public class CourseConsumer extends Thread {
                         case "DELETE":
 
                             String courseId = event.getString("data");
-                            courseService.markCourseAsDeleted(courseId);
 
+                            while (courseService.getCourse(courseId) == null) {
+                                try {
+                                    Thread.sleep(2000);
+                                    System.out.println("------ PROVATO DELETE ---------");
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            courseService.markCourseAsDeleted(courseId);
+                            System.out.println("------ DELETE FATTO ---------");
                             break;
 
                         case "ENROLL":
 
                             String userid = event.getString("userId");
                             String courseid = event.getString("courseId");
+
+                            while (userService.getUser(userid) == null) {
+                                try {
+                                    Thread.sleep(2000);
+                                    System.out.println("------ PROVATO INSERIMENTO ENROLL ---------");
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
                             Course course_ = courseService.getCourse(courseid);
                             if (course_ != null) {
                                 userService.enrollCourse(userid, course_);
+                                System.out.println("------ ENROLL INSERITO ---------");
                             }
 
                             break;
@@ -102,6 +123,35 @@ public class CourseConsumer extends Thread {
 
                             String userId = event.getString("userId");
                             String courseId2 = event.getString("courseId");
+                            String projectId = event.getString("projectId");
+
+                            while (userService.getUser(userId) == null
+                                    || courseService.getCourse(courseId2) == null) {
+                                try {
+                                    Thread.sleep(2000);
+                                    System.out.println("------ PROVATO INSERIMENTO COMPLETE ---------");
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            while (courseService.getCourse(courseId2).getProject(projectId) == null) {
+                                try {
+                                    Thread.sleep(2000);
+                                    System.out.println("------ PROVATO INSERIMENTO COMPLETE ---------");
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            while (courseService.getCourse(courseId2).getProject(projectId).getVote(userId) < 0) {
+                                try {
+                                    Thread.sleep(2000);
+                                    System.out.println("------ PROVATO INSERIMENTO COMPLETE ---------");
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
 
                             Student student = (Student) userService.getUser(userId);
 
@@ -109,6 +159,8 @@ public class CourseConsumer extends Thread {
                                 Course course2 = courseService.getCourse(courseId2);
                                 registrationService.registerCompletedCourse(student, course2);
                             }
+
+                            System.out.println("------ INSERIMENTO COMPLETE FATTO ---------");
 
                             break;
                     }

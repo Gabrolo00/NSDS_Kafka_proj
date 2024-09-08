@@ -31,7 +31,6 @@ public class ProjectService {
 
     public void submitProject(String userId, Course course, String projectId, String allegato) {
 
-        Student student = course.getStudent(userId);
         for (Student student2 : course.getEnrolledStudents()) {
             System.out.println("studentId : " + student2.getUserId());
         }
@@ -45,6 +44,7 @@ public class ProjectService {
 
     public void rateProject(String userId, Project project, Integer voto) {
 
+        System.out.println("voto: " + project.getVote(userId));
         if (project.getVote(userId) == -1) {
             project.updateEvaluation(userId, voto);
             return;
