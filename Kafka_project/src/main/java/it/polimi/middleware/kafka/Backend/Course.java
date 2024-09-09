@@ -122,16 +122,14 @@ public class Course {
         this.enrolledStudents = enrolledStudents;
     }
 
-    public Integer isCompletedByStudent(Student student) {
-        int totalGrades = 0;
+    public Boolean isCompletedByStudent(Student student) {
         for (Project project : projects) {
             Integer grade = project.getEvaluationMap().get(student.getUserId());
-            if (grade == -2 || grade == -1) {
-                return 0; // Il corso non è stato completato
+            if (grade == -2 || grade == -1 || grade < 18) {
+                return false; // Il corso non è stato completato
             }
-            totalGrades += grade;
         }
-        return totalGrades;
+        return true;
     }
 
 }

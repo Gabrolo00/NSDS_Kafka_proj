@@ -92,26 +92,23 @@ public class RateProjectServlet extends HttpServlet {
                                             producer.sendRateEvent("RATE", studentId, courseId, projectId, vote);
 
                                             Thread.sleep(2000);
-                                            Integer votoTot = course.isCompletedByStudent(student);
+                                            Boolean courseCompleted = course.isCompletedByStudent(student);
 
-                                            if (votoTot != 0) {
-                                                if (votoTot >= 18) {
-                                                    producer.sendCheckCompleteCourse("COMPLETE", studentId, courseId,
-                                                            projectId); // si manda projectId per verificare che sia
-                                                                        // stato consumato prima l'evento RATE
+                                            if (courseCompleted) {
+                                                producer.sendCheckCompleteCourse("COMPLETE", studentId, courseId,
+                                                        projectId); // si manda projectId per verificare che sia
+                                                                    // stato consumato prima l'evento RATE
 
-                                                    producer.getProducer().commitTransaction();
-                                                    producer.getProducer().close();
+                                                producer.getProducer().commitTransaction();
+                                                producer.getProducer().close();
 
-                                                    resp.setContentType("application/json");
-                                                    resp.setCharacterEncoding("UTF-8");
-                                                    PrintWriter out = resp.getWriter();
-                                                    out.print(
-                                                            "{\"status\":\"success\", \"message\":\"Project rated. The student has completed this course!\"}");
-                                                    out.flush();
-                                                    return;
-                                                }
-
+                                                resp.setContentType("application/json");
+                                                resp.setCharacterEncoding("UTF-8");
+                                                PrintWriter out = resp.getWriter();
+                                                out.print(
+                                                        "{\"status\":\"success\", \"message\":\"Project rated. The student has completed this course!\"}");
+                                                out.flush();
+                                                return;
                                             }
 
                                             producer.getProducer().commitTransaction();
